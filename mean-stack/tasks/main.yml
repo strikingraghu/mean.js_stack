@@ -1,0 +1,80 @@
+---
+
+########################### pre-installation tasks ##########################
+
+- name: Update yum packages
+  yum: name=* state=latest
+
+- name: Installing ruby gem package.
+  yum: name=rubygems state=present
+
+- name: Installing MEAN.JS dependencies.
+  yum:
+    name:
+      - gcc-c++
+      - make
+      - git
+      - fontconfig
+      - bzip2
+      - libpng-devel
+      - ruby
+      - ruby-devel
+
+- name: Install SASS packages by using npm utility.
+  command: /usr/bin/npm install -g sass
+
+########################### mongodb installation ###########################
+
+- name: Copy yum repo file for mongodb installation.
+  copy:
+    src: files/mongodb.org-3.2.repo
+    dest: /etc/yum.repos.d/mongodb.org-3.2.repo
+
+- name: Install mongodb packages.
+  yum: name=mongodb-org state=present
+
+- name: Start mongodb service.
+  service: name=mongod state=started enabled=true
+  register: mongodb_service_status
+- debug:
+    msg: "{{ mongodb_service_status }}"
+
+########################### nodejs installation ############################
+
+- name: Download nodejs rpm packages.
+  get_url:
+    url: https://rpm.nodesource.com/setup_14.x
+    dest: /etc/yum.repos.d/nodesource-el8.repo
+  register: nodejs_package_info
+- debug:
+    msg: "{{ nodejs_package_info }}"
+
+- name: Install nodejs packages.
+  yum: name=nodejs state=present
+  notify: restart mongodb
+  register: calling_handler
+- debug:
+    msg: "{{ calling_handler }}"
+
+########################### app packages ###################################
+
+- name: Installing bower package manager.
+  command: npm install -g bower
+  register: bower_install
+  changed_when: false
+
+- name: Installing gulp application packages.
+  command: npm install -g gulp
+  register: gulp_install
+  changed_when:
+    - "'gulp' not in gulp_install.stdout_lines"
+
+########################### launch app  ####################################
+
+- name: Clone meanjs boilerplate code.
+  get_url:
+    url: https://github.com/meanjs/mean.git
+    dest: /opt/app/mean
+  register: boilerplate_code
+- debug:
+    msg: "{{ boilerplate_code }}"
