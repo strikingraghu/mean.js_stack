@@ -1,4 +1,4 @@
-Role Name
+mean.js_stack
 =========
 
 This role installs and configure the system with MEAN.JS stack components.
